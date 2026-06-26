@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TEG ZD Lite</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f4f5f7;color:#1f2937;height:100vh;display:flex;flex-direction:column;overflow:hidden}
+
+/* NAV */
+nav{background:#1a1f2e;color:#fff;display:flex;align-items:center;padding:0 16px;height:52px;gap:16px;flex-shrink:0;z-index:100}
+.nav-logo{font-weight:700;font-size:15px;letter-spacing:.3px;color:#fff;white-space:nowrap;margin-right:8px}
+.nav-logo span{color:#4f86f7}
+.nav-tabs{display:flex;gap:2px;flex:1;height:100%;align-items:flex-end}
+.tab-btn{background:none;border:none;color:#9ca3af;cursor:pointer;padding:8px 12px 10px;font-size:13px;font-weight:500;border-bottom:2px solid transparent;transition:all .15s;white-space:nowrap;display:flex;align-items:center;gap:6px}
+.tab-btn:hover{color:#e5e7eb}
+.tab-btn.active{color:#fff;border-bottom-color:#4f86f7;font-weight:600}
+.badge{background:#374151;color:#d1d5db;border-radius:10px;font-size:11px;padding:1px 7px;font-weight:600}
+.tab-btn.active .badge{background:#4f86f7;color:#fff}
+.nav-right{display:flex;align-items:center;gap:10px;margin-left:auto;white-space:nowrap}
+.sync-time{font-size:12px;color:#6b7280}
+.icon-btn{background:none;border:1px solid #374151;color:#9ca3af;border-radius:6px;padding:5px 8px;cursor:pointer;font-size:14px;transition:all .15s}
+.icon-btn:hover{background:#2d3748;color:#fff}
+
+/* BANNER */
+.banner{background:#fef3c7;border-bottom:1px solid #f59e0b;padding:8px 16px;font-size:13px;color:#92400e;display:flex;align-items:center;gap:8px}
+.banner button{background:none;border:none;color:#92400e;font-weight:600;cursor:pointer;text-decoration:underline;padding:0}
+
+/* MAIN */
+.main{display:flex;flex:1;overflow:hidden}
+
+/* LIST PANEL */
+.list-panel{width:38%;border-right:1px solid #e5e7eb;background:#fff;display:flex;flex-direction:column;overflow:hidden}
+.list-filters{padding:10px;border-bottom:1px solid #f3f4f6;display:flex;flex-direction:column;gap:8px}
+.search-input{width:100%;padding:7px 10px;border:1px solid #e5e7eb;border-radius:6px;font-size:13px;outline:none;transition:border-color .15s}
+.search-input:focus{border-color:#4f86f7}
+.filter-row{display:flex;gap:6px}
+.filter-select{flex:1;padding:6px 8px;border:1px solid #e5e7eb;border-radius:6px;font-size:12px;background:#fff;outline:none;cursor:pointer}
+.ticket-list{overflow-y:auto;flex:1}
+.ticket-row{padding:12px 14px;border-bottom:1px solid #f3f4f6;cursor:pointer;transition:background .1s}
+.ticket-row:hover{background:#f9fafb}
+.ticket-row.selected{background:#eff6ff;border-left:3px solid #4f86f7}
+.ticket-id{font-size:11px;color:#9ca3af;margin-bottom:2px}
+.ticket-subject{font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:3px;color:#111827}
+.ticket-requester{font-size:12px;color:#6b7280;margin-bottom:5px}
+.ticket-meta{display:flex;align-items:center;gap:5px}
+.time-ago{font-size:11px;color:#9ca3af;margin-left:auto}
+.empty-list{padding:32px 16px;text-align:center;color:#9ca3af;font-size:13px}
+
+/* DETAIL PANEL */
+.detail-panel{flex:1;display:flex;flex-direction:column;overflow:hidden;background:#fff}
+.detail-empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#9ca3af;gap:8px}
+.detail-empty-icon{font-size:40px;opacity:.4}
+.detail-scroll{flex:1;overflow-y:auto;padding:20px}
+.detail-header{margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid #f3f4f6}
+.detail-subject{font-size:18px;font-weight:700;color:#111827;margin-bottom:6px;line-height:1.3}
+.detail-dates{font-size:12px;color:#6b7280;display:flex;gap:16px}
+.meta-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid #f3f4f6}
+.meta-field label{font-size:11px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:4px}
+.meta-select{width:100%;padding:7px 10px;border:1px solid #e5e7eb;border-radius:6px;font-size:13px;background:#fff;outline:none;cursor:pointer}
+.meta-select:focus{border-color:#4f86f7}
+.meta-text{font-size:13px;color:#374151;padding:7px 0}
+
+/* COMMENTS */
+.comments-section{margin-bottom:16px}
+.comments-title{font-size:13px;font-weight:600;color:#374151;margin-bottom:10px}
+.comment{border:1px solid #f3f4f6;border-radius:8px;padding:12px;margin-bottom:8px}
+.comment.internal{background:#fffbeb;border-left:3px solid #f59e0b}
+.comment.public{background:#fff}
+.comment-header{display:flex;align-items:center;gap:6px;margin-bottom:6px}
+.comment-author{font-size:12px;font-weight:600;color:#374151}
+.comment-time{font-size:11px;color:#9ca3af;margin-left:auto}
+.comment-label{font-size:11px;background:#fef3c7;color:#92400e;border-radius:4px;padding:1px 6px;font-weight:500}
+.comment-body{font-size:13px;color:#374151;line-height:1.5;white-space:pre-wrap}
+.skeleton{background:#f3f4f6;border-radius:6px;margin-bottom:8px}
+.sk-line{height:14px;border-radius:4px;background:linear-gradient(90deg,#f3f4f6 25%,#e5e7eb 50%,#f3f4f6 75%);background-size:200% 100%;animation:shimmer 1.2s infinite}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+/* COMPOSER */
+.composer{padding:16px;border-top:1px solid #f3f4f6;background:#fafafa}
+.composer-btns{display:flex;gap:8px;margin-bottom:0}
+.compose-toggle{padding:7px 14px;border:1px solid #e5e7eb;border-radius:6px;background:#fff;font-size:13px;cursor:pointer;transition:all .15s;font-weight:500}
+.compose-toggle:hover{background:#f9fafb}
+.compose-toggle.active-note{background:#fffbeb;border-color:#f59e0b;color:#92400e}
+.compose-toggle.active-public{background:#eff6ff;border-color:#4f86f7;color:#1d4ed8}
+.compose-area{margin-top:10px}
+.compose-textarea{width:100%;padding:10px;border:1px solid #e5e7eb;border-radius:6px;font-size:13px;resize:vertical;min-height:80px;outline:none;font-family:inherit;transition:border-color .15s}
+.compose-textarea:focus{border-color:#4f86f7}
+.compose-submit{margin-top:8px;padding:7px 16px;background:#4f86f7;color:#fff;border:none;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;transition:background .15s}
+.compose-submit:hover:not(:disabled){background:#3b73e8}
+.compose-submit:disabled{opacity:.5;cursor:not-allowed}
+
+/* BADGES */
+.badge-status,.badge-priority{display:inline-block;border-radius:20px;padding:2px 8px;font-size:11px;font-weight:600}
+.s-open{background:#dbeafe;color:#1d4ed8}
+.s-pending{background:#fef3c7;color:#92400e}
+.s-on-hold,.s-on_hold{background:#f3f4f6;color:#374151}
+.s-solved{background:#dcfce7;color:#166534}
+.p-urgent{background:#fee2e2;color:#991b1b}
+.p-high{background:#ffedd5;color:#9a3412}
+.p-normal{background:#dbeafe;color:#1e40af}
+.p-low{background:#f3f4f6;color:#6b7280}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:flex;align-items:center;justify-content:center}
+.modal{background:#fff;border-radius:12px;width:440px;padding:24px;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+.modal-title{font-size:16px;font-weight:700;margin-bottom:16px}
+.modal-field label{font-size:12px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px}
+.modal-input{width:100%;padding:9px 12px;border:1px solid #e5e7eb;border-radius:8px;font-size:13px;outline:none;font-family:inherit}
+.modal-input:focus{border-color:#4f86f7}
+.modal-test{margin-top:8px;padding:7px 14px;border:1px solid #e5e7eb;border-radius:6px;background:#fff;font-size:13px;cursor:pointer}
+.conn-result{font-size:13px;margin-top:8px;padding:8px 12px;border-radius:6px}
+.conn-ok{background:#dcfce7;color:#166534}
+.conn-fail{background:#fee2e2;color:#991b1b}
+.modal-actions{display:flex;gap:8px;margin-top:20px;justify-content:flex-end}
+.btn-save{padding:8px 20px;background:#4f86f7;color:#fff;border:none;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer}
+.btn-cancel{padding:8px 16px;background:#f3f4f6;border:none;border-radius:6px;font-size:13px;cursor:pointer}
+
+/* TOAST */
+.toast-container{position:fixed;bottom:20px;right:20px;z-index:300;display:flex;flex-direction:column;gap:8px}
+.toast{padding:10px 16px;border-radius:8px;font-size:13px;font-weight:500;box-shadow:0 4px 12px rgba(0,0,0,.15);animation:slideIn .2s ease}
+.toast-ok{background:#1a1f2e;color:#fff}
+.toast-err{background:#991b1b;color:#fff}
+@keyframes slideIn{from{transform:translateX(40px);opacity:0}to{transform:translateX(0);opacity:1}}
+
+@media(max-width:1024px){
+  .main{flex-direction:column}
+  .list-panel{width:100%;height:300px}
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">TEG <span>ZD Lite</span></div>
+  <div class="nav-tabs" id="navTabs"></div>
+  <div class="nav-right">
+    <span class="sync-time" id="syncTime">Not synced</span>
+    <button class="icon-btn" id="refreshBtn" title="Refresh">↺</button>
+    <button class="icon-btn" id="settingsBtn" title="Settings">⚙</button>
+  </div>
+</nav>
+
+<!-- BANNER -->
+<div class="banner" id="banner" style="display:none">
+  ⚠️ Worker URL not configured — <button onclick="openSettings()">open Settings to connect</button>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="list-panel">
+    <div class="list-filters">
+      <input class="search-input" id="searchInput" placeholder="Search tickets…" oninput="renderList()">
+      <div class="filter-row">
+        <select class="filter-select" id="statusFilter" onchange="renderList()">
+          <option value="">All Statuses</option>
+          <option value="open">Open</option>
+          <option value="pending">Pending</option>
+          <option value="on-hold">On-Hold</option>
+          <option value="solved">Solved</option>
+        </select>
+        <select class="filter-select" id="priorityFilter" onchange="renderList()">
+          <option value="">All Priorities</option>
+          <option value="urgent">Urgent</option>
+          <option value="high">High</option>
+          <option value="normal">Normal</option>
+          <option value="low">Low</option>
+        </select>
+      </div>
+    </div>
+    <div class="ticket-list" id="ticketList"></div>
+  </div>
+  <div class="detail-panel" id="detailPanel">
+    <div class="detail-empty">
+      <div class="detail-empty-icon">🎫</div>
+      <div>Select a ticket to view details</div>
+    </div>
+  </div>
+</div>
+
+<!-- SETTINGS MODAL -->
+<div class="modal-overlay" id="settingsModal" style="display:none" onclick="closeSettingsOutside(event)">
+  <div class="modal">
+    <div class="modal-title">⚙ Settings</div>
+    <div class="modal-field">
+      <label>Worker URL</label>
+      <input class="modal-input" id="workerInput" placeholder="https://teg-zd-proxy.your-account.workers.dev">
+      <button class="modal-test" onclick="testConnection()">Test connection</button>
+      <div id="connResult"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeSettings()">Cancel</button>
+      <button class="btn-save" onclick="saveSettings()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+// ── STATE ──────────────────────────────────────────────
+let tickets = [];
+let categories = {};
+let selectedId = null;
+let activeTab = 'all';
+let workerUrl = '';
+let composerMode = null; // 'note' | 'reply' | null
+
+const TABS = [
+  {id:'all', label:'All Tickets'},
+  {id:'exchange', label:'Exchange'},
+  {id:'trustd', label:'Trustd'},
+  {id:'smartpay', label:'SmartPay'},
+  {id:'mobileapp', label:'Mobile App'},
+];
+
+const CAT_MAP = {
+  exchange:'exchange', trustd:'trustd', smartpay:'smartpay',
+  'mobile app':'mobileapp', mobileapp:'mobileapp'
+};
+
+// ── MOCK DATA ──────────────────────────────────────────
+const MOCK_TICKETS = [
+  {id:10001,subject:'Load not appearing on Exchange board after posting',requester:{name:'James Hartley',email:'j.hartley@fastfreight.co.uk'},status:'open',priority:'high',created_at:'2026-06-24T08:12:00Z',updated_at:'2026-06-25T14:30:00Z',_cat:'exchange'},
+  {id:10002,subject:'SmartPay payment held — carrier requesting urgent release',requester:{name:'Priya Mehta',email:'priya@logisticsplus.com'},status:'open',priority:'urgent',created_at:'2026-06-25T09:00:00Z',updated_at:'2026-06-26T07:45:00Z',_cat:'smartpay'},
+  {id:10003,subject:'Trustd document verification stuck on "processing" for 3 days',requester:{name:'Tom Barker',email:'t.barker@roadrunner.co.uk'},status:'pending',priority:'high',created_at:'2026-06-22T11:30:00Z',updated_at:'2026-06-25T16:10:00Z',_cat:'trustd'},
+  {id:10004,subject:'Mobile app crashing on iOS 17 when opening load details',requester:{name:'Fatima Al-Hassan',email:'f.hassan@quickhaul.com'},status:'open',priority:'urgent',created_at:'2026-06-26T06:00:00Z',updated_at:'2026-06-26T09:20:00Z',_cat:'mobileapp'},
+  {id:10005,subject:'Cannot match load — error: carrier not verified',requester:{name:'Derek Simmons',email:'derek@simex-haulage.co.uk'},status:'on-hold',priority:'normal',created_at:'2026-06-23T13:00:00Z',updated_at:'2026-06-24T10:00:00Z',_cat:'exchange'},
+  {id:10006,subject:'Credit limit dispute — SmartPay blocking new loads',requester:{name:'Anita Rossi',email:'a.rossi@eurofreight.eu'},status:'open',priority:'high',created_at:'2026-06-25T15:00:00Z',updated_at:'2026-06-26T08:00:00Z',_cat:'smartpay'},
+  {id:10007,subject:'Onboarding stuck — Trustd badge not appearing after approval',requester:{name:'Samuel Osei',email:'s.osei@osei-logistics.com'},status:'pending',priority:'normal',created_at:'2026-06-24T10:45:00Z',updated_at:'2026-06-25T11:30:00Z',_cat:'trustd'},
+  {id:10008,subject:'Exchange API rate limit errors — integration team affected',requester:{name:'Lucy Tran',email:'l.tran@techfreight.io'},status:'open',priority:'high',created_at:'2026-06-25T08:30:00Z',updated_at:'2026-06-25T17:00:00Z',_cat:'exchange'},
+  {id:10009,subject:'Mobile app: push notifications not arriving',requester:{name:'Ryan O\'Brien',email:'r.obrien@obienhaulage.ie'},status:'open',priority:'low',created_at:'2026-06-24T14:00:00Z',updated_at:'2026-06-24T14:00:00Z',_cat:'mobileapp'},
+  {id:10010,subject:'SmartPay — incorrect deduction on settlement report',requester:{name:'Charlotte Webb',email:'c.webb@webbcargo.co.uk'},status:'on-hold',priority:'normal',created_at:'2026-06-23T09:00:00Z',updated_at:'2026-06-25T12:00:00Z',_cat:'smartpay'},
+];
+
+const MOCK_COMMENTS = {
+  10001:[
+    {id:1,author:{name:'James Hartley'},body:'The load was posted about 2 hours ago but it\'s not showing on the board for carriers. Other jobs posted today are visible.',public:true,created_at:'2026-06-24T08:15:00Z'},
+    {id:2,author:{name:'Sarah (TEG Support)'},body:'Checked on our end — load ID 443821 is in the system. Looks like a caching delay on the Exchange feed. Flushing now.',public:false,created_at:'2026-06-24T10:00:00Z'},
+    {id:3,author:{name:'Sarah (TEG Support)'},body:'Hi James, the load should now be visible on the board. Please confirm and let us know if you see any further issues.',public:true,created_at:'2026-06-24T10:05:00Z'},
+  ],
+  10002:[
+    {id:1,author:{name:'Priya Mehta'},body:'Payment of £3,840 has been held since yesterday. The carrier needs to be paid today or they will refuse the load.',public:true,created_at:'2026-06-25T09:02:00Z'},
+    {id:2,author:{name:'Amir (Credit Control)'},body:'Escalated to SmartPay ops. Fraud flag triggered automatically — reviewing now.',public:false,created_at:'2026-06-25T10:30:00Z'},
+  ],
+  10003:[
+    {id:1,author:{name:'Tom Barker'},body:'Uploaded all documents 3 days ago. Status still says "processing". My vehicles are being turned away.',public:true,created_at:'2026-06-22T11:32:00Z'},
+    {id:2,author:{name:'Onboarding Team'}  ,body:'Documents received. OCR pipeline delay — manually reviewed and approved. Badge should appear within 1 hour.',public:false,created_at:'2026-06-25T15:00:00Z'},
+    {id:3,author:{name:'Onboarding Team'},body:'Hi Tom, your Trustd badge has been issued. You can now operate verified loads on the Exchange.',public:true,created_at:'2026-06-25T15:05:00Z'},
+  ],
+};
+for(let t of MOCK_TICKETS){
+  if(!MOCK_COMMENTS[t.id]) MOCK_COMMENTS[t.id]=[
+    {id:1,author:{name:t.requester.name},body:'Please can you help with this issue?',public:true,created_at:t.created_at},
+    {id:2,author:{name:'TEG Support'},body:'Thanks for contacting us. We are looking into this.',public:false,created_at:t.updated_at},
+  ];
+}
+
+// ── INIT ───────────────────────────────────────────────
+function init(){
+  workerUrl = ls('teg_worker_url') || '';
+  categories = JSON.parse(ls('teg_categories') || '{}');
+  buildTabs();
+  document.getElementById('settingsBtn').onclick = openSettings;
+  document.getElementById('refreshBtn').onclick = loadTickets;
+  if(!workerUrl) document.getElementById('banner').style.display='flex';
+  loadTickets();
+}
+
+function ls(k,v){
+  if(v===undefined) return localStorage.getItem(k);
+  localStorage.setItem(k,v);
+}
+
+// ── TICKETS LOAD ───────────────────────────────────────
+async function loadTickets(){
+  document.getElementById('refreshBtn').textContent='↻';
+  if(!workerUrl){
+    tickets = MOCK_TICKETS.map(t=>({...t}));
+    applyCategories();
+    finishLoad();
+    return;
+  }
+  try{
+    const r = await fetch(`${workerUrl}/api/zendesk/api/v2/tickets.json?status=open&per_page=100`);
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    const d = await r.json();
+    tickets = (d.tickets||[]).map(t=>({
+      id:t.id, subject:t.subject,
+      requester:{name:t.via?.source?.from?.name||'Unknown',email:''},
+      status:t.status, priority:t.priority||'normal',
+      created_at:t.created_at, updated_at:t.updated_at,
+    }));
+    applyCategories();
+    finishLoad(tickets.length===0);
+  }catch(e){
+    toast('Could not reach Worker — showing demo data','err');
+    tickets = MOCK_TICKETS.map(t=>({...t}));
+    applyCategories();
+    finishLoad();
+  }
+}
+
+function applyCategories(){
+  tickets.forEach(t=>{
+    if(categories[t.id]) t._cat = categories[t.id];
+    else if(!t._cat) t._cat = 'uncategorised';
+  });
+}
+
+function finishLoad(empty){
+  document.getElementById('syncTime').textContent='Synced '+new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+  document.getElementById('refreshBtn').textContent='↺';
+  updateBadges();
+  renderList(empty);
+}
+
+// ── TABS ───────────────────────────────────────────────
+function buildTabs(){
+  const el = document.getElementById('navTabs');
+  el.innerHTML = TABS.map(t=>`
+    <button class="tab-btn ${t.id===activeTab?'active':''}" data-tab="${t.id}" onclick="setTab('${t.id}')">
+      ${t.label} <span class="badge" id="badge-${t.id}">0</span>
+    </button>`).join('');
+}
+
+function setTab(id){
+  activeTab=id;
+  selectedId=null;
+  composerMode=null;
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active',b.dataset.tab===id));
+  renderList();
+  showEmpty();
+}
+
+function updateBadges(){
+  TABS.forEach(t=>{
+    const count = t.id==='all' ? tickets.length : tickets.filter(tk=>tk._cat===t.id).length;
+    const el=document.getElementById('badge-'+t.id);
+    if(el) el.textContent=count;
+  });
+}
+
+// ── LIST ───────────────────────────────────────────────
+function filteredTickets(){
+  const q=(document.getElementById('searchInput').value||'').toLowerCase();
+  const sf=document.getElementById('statusFilter').value;
+  const pf=document.getElementById('priorityFilter').value;
+  return tickets.filter(t=>{
+    if(activeTab!=='all' && t._cat!==activeTab) return false;
+    if(sf && t.status!==sf) return false;
+    if(pf && t.priority!==pf) return false;
+    if(q && !(`${t.id} ${t.subject} ${t.requester?.name}`).toLowerCase().includes(q)) return false;
+    return true;
+  });
+}
+
+function renderList(noTickets){
+  const list=document.getElementById('ticketList');
+  const ts=filteredTickets();
+  if(!ts.length){
+    const msg = noTickets
+      ? 'No open tickets — all caught up, or all filtered out by the Worker'
+      : 'No tickets match your filters';
+    list.innerHTML=`<div class="empty-list">${msg}</div>`;
+    return;
+  }
+  list.innerHTML=ts.map(t=>`
+    <div class="ticket-row ${t.id===selectedId?'selected':''}" onclick="selectTicket(${t.id})">
+      <div class="ticket-id">#${t.id}</div>
+      <div class="ticket-subject">${esc(t.subject)}</div>
+      <div class="ticket-requester">${esc(t.requester?.name||'Unknown')}</div>
+      <div class="ticket-meta">
+        <span class="badge-status s-${t.status.replace(' ','-')}">${cap(t.status)}</span>
+        <span class="badge-priority p-${t.priority}">${cap(t.priority)}</span>
+        <span class="time-ago">${ago(t.updated_at)}</span>
+      </div>
+    </div>`).join('');
+}
+
+// ── DETAIL ────────────────────────────────────────────
+async function selectTicket(id){
+  selectedId=id;
+  composerMode=null;
+  renderList();
+  const t=tickets.find(x=>x.id===id);
+  if(!t) return;
+  const dp=document.getElementById('detailPanel');
+  dp.innerHTML=`
+    <div class="detail-scroll" id="detailScroll">
+      <div class="detail-header">
+        <div class="detail-subject">${esc(t.subject)}</div>
+        <div class="detail-dates">
+          <span>#${t.id}</span>
+          <span>Created: ${fmt(t.created_at)}</span>
+          <span>Updated: ${fmt(t.updated_at)}</span>
+        </div>
+      </div>
+      <div class="meta-grid">
+        <div class="meta-field">
+          <label>Status</label>
+          <select class="meta-select" onchange="updateTicketField(${t.id},'status',this.value)">
+            ${['open','pending','on-hold','solved'].map(s=>`<option value="${s}" ${t.status===s?'selected':''}>${cap(s)}</option>`).join('')}
+          </select>
+        </div>
+        <div class="meta-field">
+          <label>Priority</label>
+          <select class="meta-select" onchange="updateTicketField(${t.id},'priority',this.value)">
+            ${['urgent','high','normal','low'].map(p=>`<option value="${p}" ${t.priority===p?'selected':''}>${cap(p)}</option>`).join('')}
+          </select>
+        </div>
+        <div class="meta-field">
+          <label>Product Category</label>
+          <select class="meta-select" onchange="updateCategory(${t.id},this.value)">
+            ${[['exchange','Exchange'],['trustd','Trustd'],['smartpay','SmartPay'],['mobileapp','Mobile App'],['uncategorised','Uncategorised']].map(([v,l])=>`<option value="${v}" ${(t._cat||'uncategorised')===v?'selected':''}>${l}</option>`).join('')}
+          </select>
+        </div>
+        <div class="meta-field">
+          <label>Requester</label>
+          <div class="meta-text">${esc(t.requester?.name||'—')}<br><span style="color:#9ca3af;font-size:12px">${esc(t.requester?.email||'')}</span></div>
+        </div>
+      </div>
+      <div class="comments-section">
+        <div class="comments-title">💬 Conversation</div>
+        <div id="commentThread"><div class="skeleton"><div class="sk-line" style="width:60%;margin:8px"></div><div class="sk-line" style="width:90%;margin:8px"></div></div></div>
+      </div>
+    </div>
+    <div class="composer" id="composer">
+      <div class="composer-btns">
+        <button class="compose-toggle" id="btnNote" onclick="toggleComposer('note')">🔒 Add internal note</button>
+        <button class="compose-toggle" id="btnReply" onclick="toggleComposer('reply')">💬 Add public reply</button>
+      </div>
+      <div class="compose-area" id="composeArea" style="display:none">
+        <textarea class="compose-textarea" id="composeText" placeholder="Type your message…"></textarea>
+        <button class="compose-submit" id="composeSubmit" onclick="submitComment(${t.id})" disabled>Send</button>
+      </div>
+    </div>`;
+
+  document.getElementById('composeText')?.addEventListener('input',e=>{
+    document.getElementById('composeSubmit').disabled=!e.target.value.trim();
+  });
+
+  loadComments(id);
+}
+
+async function loadComments(id){
+  const thread=document.getElementById('commentThread');
+  if(!thread) return;
+  let comments;
+  if(!workerUrl){
+    comments = MOCK_COMMENTS[id]||[];
+  } else {
+    try{
+      const r=await fetch(`${workerUrl}/api/zendesk/api/v2/tickets/${id}/comments.json`);
+      if(!r.ok) throw new Error();
+      const d=await r.json();
+      comments=d.comments||[];
+    }catch{
+      comments=MOCK_COMMENTS[id]||[];
+    }
+  }
+  thread.innerHTML=comments.map(c=>`
+    <div class="comment ${c.public?'public':'internal'}">
+      <div class="comment-header">
+        <span class="comment-author">${c.public?'💬':'🔒'} ${esc(c.author?.name||c.author_id||'Agent')}</span>
+        ${!c.public?'<span class="comment-label">Internal note</span>':''}
+        <span class="comment-time">${fmt(c.created_at)}</span>
+      </div>
+      <div class="comment-body">${esc(c.body||c.plain_body||'')}</div>
+    </div>`).join('')||'<div style="color:#9ca3af;font-size:13px">No comments yet.</div>';
+}
+
+function toggleComposer(mode){
+  const area=document.getElementById('composeArea');
+  const btn=document.getElementById('composeText');
+  if(composerMode===mode){
+    composerMode=null; area.style.display='none';
+    document.getElementById('btnNote').classList.remove('active-note');
+    document.getElementById('btnReply').classList.remove('active-public');
+    return;
+  }
+  composerMode=mode;
+  area.style.display='block';
+  document.getElementById('btnNote').classList.toggle('active-note',mode==='note');
+  document.getElementById('btnReply').classList.toggle('active-public',mode==='reply');
+  if(btn) btn.placeholder=mode==='note'?'Type internal note…':'Type public reply…';
+  document.getElementById('composeText').focus();
+}
+
+async function submitComment(id){
+  const body=document.getElementById('composeText').value.trim();
+  if(!body) return;
+  const isPublic=composerMode==='reply';
+  const btn=document.getElementById('composeSubmit');
+  btn.disabled=true; btn.textContent='Sending…';
+
+  if(!workerUrl){
+    const t=tickets.find(x=>x.id===id);
+    if(t){
+      if(!MOCK_COMMENTS[id]) MOCK_COMMENTS[id]=[];
+      MOCK_COMMENTS[id].push({id:Date.now(),author:{name:'You'},body,public:isPublic,created_at:new Date().toISOString()});
+    }
+    toast('Comment added ✓'); loadComments(id);
+    document.getElementById('composeText').value='';
+    btn.textContent='Send'; composerMode=null;
+    document.getElementById('composeArea').style.display='none';
+    document.getElementById('btnNote').classList.remove('active-note');
+    document.getElementById('btnReply').classList.remove('active-public');
+    return;
+  }
+  try{
+    const r=await fetch(`${workerUrl}/api/zendesk/api/v2/tickets/${id}.json`,{
+      method:'PUT',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({ticket:{comment:{body,public:isPublic}}})
+    });
+    if(!r.ok) throw new Error();
+    toast('Comment added ✓'); loadComments(id);
+    document.getElementById('composeText').value='';
+    composerMode=null;
+    document.getElementById('composeArea').style.display='none';
+    document.getElementById('btnNote').classList.remove('active-note');
+    document.getElementById('btnReply').classList.remove('active-public');
+  }catch{toast('Failed to add comment — check Worker URL','err');}
+  btn.disabled=false; btn.textContent='Send';
+}
+
+// ── UPDATES ───────────────────────────────────────────
+async function updateTicketField(id,field,value){
+  const t=tickets.find(x=>x.id===id);
+  if(t) t[field]=value;
+  if(!workerUrl){toast('Ticket updated ✓ (demo)');renderList();updateBadges();return;}
+  try{
+    const r=await fetch(`${workerUrl}/api/zendesk/api/v2/tickets/${id}.json`,{
+      method:'PUT',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({ticket:{[field]:value}})
+    });
+    if(!r.ok) throw new Error();
+    toast('Ticket updated ✓');
+  }catch{toast('Update failed — check Worker URL','err');}
+  renderList(); updateBadges();
+}
+
+function updateCategory(id,cat){
+  categories[id]=cat;
+  ls('teg_categories',JSON.stringify(categories));
+  const t=tickets.find(x=>x.id===id);
+  if(t) t._cat=cat;
+  updateBadges(); renderList();
+  toast('Category saved ✓');
+}
+
+// ── SETTINGS ──────────────────────────────────────────
+function openSettings(){
+  document.getElementById('workerInput').value=workerUrl||'';
+  document.getElementById('connResult').innerHTML='';
+  document.getElementById('settingsModal').style.display='flex';
+}
+function closeSettings(){document.getElementById('settingsModal').style.display='none';}
+function closeSettingsOutside(e){if(e.target===document.getElementById('settingsModal')) closeSettings();}
+function saveSettings(){
+  workerUrl=document.getElementById('workerInput').value.trim().replace(/\/$/,'');
+  ls('teg_worker_url',workerUrl);
+  document.getElementById('banner').style.display=workerUrl?'none':'flex';
+  closeSettings(); loadTickets();
+}
+async function testConnection(){
+  const url=(document.getElementById('workerInput').value||'').trim().replace(/\/$/,'');
+  const el=document.getElementById('connResult');
+  if(!url){el.className='conn-result conn-fail';el.textContent='✗ Please enter a Worker URL';return;}
+  el.textContent='Testing…';
+  try{
+    const r=await fetch(`${url}/api/zendesk/api/v2/users/me.json`);
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    const d=await r.json();
+    el.className='conn-result conn-ok';
+    el.textContent=`✓ Connected as ${d.user?.name||'service account'}`;
+  }catch(e){
+    el.className='conn-result conn-fail';
+    el.textContent='✗ Connection failed — check URL and Worker deployment';
+  }
+}
+
+// ── HELPERS ───────────────────────────────────────────
+function showEmpty(){
+  document.getElementById('detailPanel').innerHTML=`
+    <div class="detail-empty">
+      <div class="detail-empty-icon">🎫</div>
+      <div>Select a ticket to view details</div>
+    </div>`;
+}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function cap(s){return s?s.charAt(0).toUpperCase()+s.slice(1):'';}
+function fmt(d){if(!d)return'—';return new Date(d).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});}
+function ago(d){
+  if(!d)return'';
+  const s=Math.floor((Date.now()-new Date(d))/1000);
+  if(s<60)return'just now';
+  if(s<3600)return Math.floor(s/60)+'m ago';
+  if(s<86400)return Math.floor(s/3600)+'h ago';
+  return Math.floor(s/86400)+'d ago';
+}
+function toast(msg,type='ok'){
+  const c=document.getElementById('toastContainer');
+  const el=document.createElement('div');
+  el.className=`toast toast-${type==='err'?'err':'ok'}`;
+  el.textContent=msg;
+  c.appendChild(el);
+  setTimeout(()=>el.remove(),3200);
+}
+
+init();
+</script>
+</body>
+</html>
