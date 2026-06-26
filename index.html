@@ -293,10 +293,18 @@ function updateSignAs(){
 
 function changeAgentName(e){
   if(e) e.preventDefault();
+  // Preserve whatever is in the composer across the prompt — a prompt
+  // blurs the field and we must not lose in-progress text.
+  const ta = document.getElementById('composeText');
+  const preserved = ta ? ta.value : '';
   const entered = window.prompt('Enter your name:', getAgentName());
-  if(entered===null) return;
-  const name = entered.trim();
-  if(name){ ls('teg_agent_name', name); updateSignAs(); }
+  if(entered!==null){
+    const name = entered.trim();
+    if(name){ ls('teg_agent_name', name); }
+  }
+  updateSignAs();
+  // Restore composer text and focus.
+  if(ta){ ta.value = preserved; ta.focus(); }
 }
 
 // ── INIT ───────────────────────────────────────────────
@@ -561,8 +569,13 @@ function toggleComposer(mode){
 }
 
 async function submitComment(id){
-  let body=document.getElementById('composeText').value.trim();
-  if(!body) return;
+  // Capture the textarea value FIRST, before any name/prompt logic can
+  // run or steal focus. A name change immediately before sending was
+  // leaving this empty by the time it was read — causing blank notes.
+  const ta = document.getElementById('composeText');
+  let body = (ta ? ta.value : '').trim();
+  if(!body){ toast('Nothing to send — type a message first','err'); return; }
+
   const isPublic=composerMode==='reply';
 
   // Internal notes must be signed. Require a name, then prepend it.
@@ -574,6 +587,9 @@ async function submitComment(id){
     }
     body = `[${name}]: ${body}`;
   }
+
+  // Final guard: never send an empty body to Zendesk.
+  if(!body.trim()){ toast('Note body empty — not sent','err'); return; }
 
   const btn=document.getElementById('composeSubmit');
   btn.disabled=true; btn.textContent='Sending…';
