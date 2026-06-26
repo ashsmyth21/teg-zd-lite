@@ -260,6 +260,45 @@ for(let t of MOCK_TICKETS){
   ];
 }
 
+// Agent name is remembered per browser (localStorage), used to
+// attribute internal notes as "[Name]: ...". Self-declared, not verified.
+function getAgentName(){
+  return ls('teg_agent_name') || '';
+}
+function ensureAgentName(){
+  let name = getAgentName();
+  if(!name){
+    const entered = window.prompt('Enter your name (used to sign your internal notes):');
+    if(entered===null) return '';        // cancelled
+    name = entered.trim();
+    if(name) ls('teg_agent_name', name);
+  }
+  return name;
+}
+
+// Shows "Signing as X · change" under the composer for internal notes only.
+function updateSignAs(){
+  const el=document.getElementById('signAs');
+  if(!el) return;
+  if(composerMode==='note'){
+    const name=getAgentName();
+    el.style.display='block';
+    el.innerHTML = name
+      ? `🔒 Signing internal note as <strong>${esc(name)}</strong> · <a href="#" onclick="changeAgentName(event)" style="color:#92400e">change</a>`
+      : `🔒 You'll be asked for your name when you send`;
+  } else {
+    el.style.display='none';
+  }
+}
+
+function changeAgentName(e){
+  if(e) e.preventDefault();
+  const entered = window.prompt('Enter your name:', getAgentName());
+  if(entered===null) return;
+  const name = entered.trim();
+  if(name){ ls('teg_agent_name', name); updateSignAs(); }
+}
+
 // ── INIT ───────────────────────────────────────────────
 function init(){
   workerUrl = ls('teg_worker_url') || '';
@@ -463,6 +502,7 @@ async function selectTicket(id){
         <button class="compose-toggle" id="btnReply" onclick="toggleComposer('reply')">💬 Add public reply</button>
       </div>
       <div class="compose-area" id="composeArea" style="display:none">
+        <div id="signAs" style="font-size:12px;color:#92400e;margin-bottom:6px;display:none"></div>
         <textarea class="compose-textarea" id="composeText" placeholder="Type your message…"></textarea>
         <button class="compose-submit" id="composeSubmit" onclick="submitComment(${t.id})" disabled>Send</button>
       </div>
@@ -516,13 +556,25 @@ function toggleComposer(mode){
   document.getElementById('btnNote').classList.toggle('active-note',mode==='note');
   document.getElementById('btnReply').classList.toggle('active-public',mode==='reply');
   if(btn) btn.placeholder=mode==='note'?'Type internal note…':'Type public reply…';
+  updateSignAs();
   document.getElementById('composeText').focus();
 }
 
 async function submitComment(id){
-  const body=document.getElementById('composeText').value.trim();
+  let body=document.getElementById('composeText').value.trim();
   if(!body) return;
   const isPublic=composerMode==='reply';
+
+  // Internal notes must be signed. Require a name, then prepend it.
+  if(!isPublic){
+    const name = ensureAgentName();
+    if(!name){
+      toast('Name required to leave an internal note','err');
+      return;
+    }
+    body = `[${name}]: ${body}`;
+  }
+
   const btn=document.getElementById('composeSubmit');
   btn.disabled=true; btn.textContent='Sending…';
 
