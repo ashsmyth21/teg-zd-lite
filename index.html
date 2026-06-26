@@ -209,6 +209,7 @@ let activeTab = 'all';
 let workerUrl = '';
 let appPasscode = '';
 let composerMode = null; // 'note' | 'reply' | null
+let sending = false;     // re-entry lock to prevent duplicate sends
 
 const TABS = [
   {id:'all', label:'All Tickets'},
@@ -569,9 +570,11 @@ function toggleComposer(mode){
 }
 
 async function submitComment(id){
-  // Capture the textarea value FIRST, before any name/prompt logic can
-  // run or steal focus. A name change immediately before sending was
-  // leaving this empty by the time it was read — causing blank notes.
+  // Hard re-entry lock: a double-bound handler or fast double-click was
+  // firing submit twice — the second fire read the textarea AFTER the
+  // first cleared it, sending an empty body → blank note in Zendesk.
+  if(sending) return;
+
   const ta = document.getElementById('composeText');
   let body = (ta ? ta.value : '').trim();
   if(!body){ toast('Nothing to send — type a message first','err'); return; }
@@ -588,9 +591,9 @@ async function submitComment(id){
     body = `[${name}]: ${body}`;
   }
 
-  // Final guard: never send an empty body to Zendesk.
   if(!body.trim()){ toast('Note body empty — not sent','err'); return; }
 
+  sending = true;
   const btn=document.getElementById('composeSubmit');
   btn.disabled=true; btn.textContent='Sending…';
 
@@ -603,6 +606,7 @@ async function submitComment(id){
     toast('Comment added ✓'); loadComments(id);
     document.getElementById('composeText').value='';
     btn.textContent='Send'; composerMode=null;
+    sending=false;
     document.getElementById('composeArea').style.display='none';
     document.getElementById('btnNote').classList.remove('active-note');
     document.getElementById('btnReply').classList.remove('active-public');
@@ -622,6 +626,7 @@ async function submitComment(id){
     document.getElementById('btnReply').classList.remove('active-public');
   }catch{toast('Failed to add comment — check Worker URL','err');}
   btn.disabled=false; btn.textContent='Send';
+  sending=false;
 }
 
 // ── UPDATES ───────────────────────────────────────────
