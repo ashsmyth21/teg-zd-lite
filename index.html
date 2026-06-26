@@ -207,6 +207,7 @@ let categories = {};
 let selectedId = null;
 let activeTab = 'all';
 let workerUrl = '';
+let appPasscode = '';
 let composerMode = null; // 'note' | 'reply' | null
 
 const TABS = [
@@ -267,7 +268,35 @@ function init(){
   document.getElementById('settingsBtn').onclick = openSettings;
   document.getElementById('refreshBtn').onclick = loadTickets;
   if(!workerUrl) document.getElementById('banner').style.display='flex';
+  // Ask for the passcode once per session before loading live data.
+  if(workerUrl && !appPasscode){
+    promptPasscode();
+  } else {
+    loadTickets();
+  }
+}
+
+// Passcode is held in memory only (not localStorage) so it clears
+// when the tab closes. Sent on every Worker call as X-App-Passcode.
+function promptPasscode(){
+  const code = window.prompt('Enter the TEG ZD Lite access passcode:');
+  if(code===null){
+    // User cancelled — show locked state rather than loading.
+    document.getElementById('ticketList').innerHTML =
+      '<div class="empty-list">🔒 Locked. Refresh the page and enter the passcode to continue.</div>';
+    return;
+  }
+  appPasscode = code.trim();
   loadTickets();
+}
+
+// Single fetch wrapper that always attaches the passcode header.
+function apiFetch(path, options){
+  options = options || {};
+  options.headers = Object.assign({}, options.headers, {
+    'X-App-Passcode': appPasscode
+  });
+  return fetch(`${workerUrl}${path}`, options);
 }
 
 function ls(k,v){
@@ -285,7 +314,7 @@ async function loadTickets(){
     return;
   }
   try{
-    const r = await fetch(`${workerUrl}/api/zendesk/api/v2/tickets.json`);
+    const r = await apiFetch(`/api/zendesk/api/v2/tickets.json`);
     if(!r.ok) throw new Error('HTTP '+r.status);
     const d = await r.json();
     tickets = (d.tickets||[]).map(t=>({
@@ -454,7 +483,7 @@ async function loadComments(id){
     comments = MOCK_COMMENTS[id]||[];
   } else {
     try{
-      const r=await fetch(`${workerUrl}/api/zendesk/api/v2/tickets/${id}/comments.json`);
+      const r=await apiFetch(`/api/zendesk/api/v2/tickets/${id}/comments.json`);
       if(!r.ok) throw new Error();
       const d=await r.json();
       comments=d.comments||[];
@@ -512,7 +541,7 @@ async function submitComment(id){
     return;
   }
   try{
-    const r=await fetch(`${workerUrl}/api/zendesk/api/v2/tickets/${id}.json`,{
+    const r=await apiFetch(`/api/zendesk/api/v2/tickets/${id}.json`,{
       method:'PUT',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({ticket:{comment:{body,public:isPublic}}})
     });
@@ -533,7 +562,7 @@ async function updateTicketField(id,field,value){
   if(t) t[field]=value;
   if(!workerUrl){toast('Ticket updated ✓ (demo)');renderList();updateBadges();return;}
   try{
-    const r=await fetch(`${workerUrl}/api/zendesk/api/v2/tickets/${id}.json`,{
+    const r=await apiFetch(`/api/zendesk/api/v2/tickets/${id}.json`,{
       method:'PUT',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({ticket:{[field]:value}})
     });
@@ -564,15 +593,23 @@ function saveSettings(){
   workerUrl=document.getElementById('workerInput').value.trim().replace(/\/$/,'');
   ls('teg_worker_url',workerUrl);
   document.getElementById('banner').style.display=workerUrl?'none':'flex';
-  closeSettings(); loadTickets();
+  closeSettings();
+  if(workerUrl && !appPasscode){ promptPasscode(); } else { loadTickets(); }
 }
 async function testConnection(){
   const url=(document.getElementById('workerInput').value||'').trim().replace(/\/$/,'');
   const el=document.getElementById('connResult');
   if(!url){el.className='conn-result conn-fail';el.textContent='✗ Please enter a Worker URL';return;}
   el.textContent='Testing…';
+  if(!appPasscode){
+    const code = window.prompt('Enter the access passcode to test:');
+    if(code===null){el.className='conn-result conn-fail';el.textContent='✗ Passcode required';return;}
+    appPasscode = code.trim();
+  }
   try{
-    const r=await fetch(`${url}/api/zendesk/api/v2/users/me.json`);
+    const r=await fetch(`${url}/api/zendesk/api/v2/users/me.json`,{
+      headers:{'X-App-Passcode':appPasscode}
+    });
     if(!r.ok) throw new Error('HTTP '+r.status);
     const d=await r.json();
     el.className='conn-result conn-ok';
